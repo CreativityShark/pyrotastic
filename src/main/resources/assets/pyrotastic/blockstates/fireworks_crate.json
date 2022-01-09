@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "pyrotastic:block/fireworks_crate"
+    },
+    "facing=east": {
+      "model": "pyrotastic:block/fireworks_crate",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "pyrotastic:block/fireworks_crate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "pyrotastic:block/fireworks_crate",
+      "y": 270
+    }
+  }
+}
