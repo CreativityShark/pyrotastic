@@ -1,6 +1,5 @@
 package net.creativityshark.pyrotastic.common.entities;
 
-import net.creativityshark.pyrotastic.PyrotasticMod;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.TntEntity;

@@ -5,9 +5,12 @@ import net.creativityshark.pyrotastic.common.blocks.entities.FireworksCrateBlock
 import net.creativityshark.pyrotastic.common.entities.FireworksCrateEntity;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.TntEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
@@ -28,6 +31,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.explosion.Explosion;
 import org.jetbrains.annotations.Nullable;
 
 public class FireworksCrateBlock extends TntBlock implements BlockEntityProvider {
@@ -44,6 +48,28 @@ public class FireworksCrateBlock extends TntBlock implements BlockEntityProvider
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         return new FireworksCrateBlockEntity(pos, state);
+    }
+
+    @Override
+    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        if (!oldState.isOf(state.getBlock())) {
+            if (world.isReceivingRedstonePower(pos)) {
+                primeCrate(world, pos);
+                world.removeBlock(pos, false);
+            }
+        }
+    }
+
+    @Override
+    public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+        if (world.isReceivingRedstonePower(pos)) {
+            primeCrate(world, pos);
+            world.removeBlock(pos, false);
+        }
+    }
+
+    public static void primeCrate(World world, BlockPos pos) {
+        primeCrate(world, pos, null);
     }
 
     private static void primeCrate(World world, BlockPos pos, @Nullable LivingEntity igniter) {
@@ -77,6 +103,12 @@ public class FireworksCrateBlock extends TntBlock implements BlockEntityProvider
             itemEntity.setToDefaultPickupDelay();
             world.spawnEntity(itemEntity);
         }
+
+        if (world.isReceivingRedstonePower(pos)) {
+            primeCrate(world, pos);
+            world.removeBlock(pos, false);
+        }
+
         super.onBreak(world, pos, state, player);
     }
 
@@ -109,6 +141,34 @@ public class FireworksCrateBlock extends TntBlock implements BlockEntityProvider
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         player.incrementStat(Stats.MINED.getOrCreateStat(this));
         player.addExhaustion(0.005F);
+    }
+
+    @Override
+    public void onDestroyedByExplosion(World world, BlockPos pos, Explosion explosion) {
+        if (!world.isClient) {
+            TntEntity tntEntity = new FireworksCrateEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, explosion.getCausingEntity());
+            int i = tntEntity.getFuse();
+            tntEntity.setFuse((short)(world.random.nextInt(i / 4) + i / 8));
+            world.spawnEntity(tntEntity);
+        }
+    }
+
+    @Override
+    public void onProjectileHit(World world, BlockState state, BlockHitResult hit, ProjectileEntity projectile) {
+        if (!world.isClient) {
+            BlockPos blockPos = hit.getBlockPos();
+            Entity entity = projectile.getOwner();
+            if (projectile.isOnFire() && projectile.canModifyAt(world, blockPos)) {
+                primeCrate(world, blockPos, entity instanceof LivingEntity ? (LivingEntity)entity : null);
+                world.removeBlock(blockPos, false);
+            }
+        }
+
+    }
+
+    @Override
+    public boolean shouldDropItemsOnExplosion(Explosion explosion) {
+        return false;
     }
 
     //Rotation Stuff
