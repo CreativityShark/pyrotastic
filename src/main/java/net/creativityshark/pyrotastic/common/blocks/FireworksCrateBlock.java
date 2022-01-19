@@ -146,10 +146,10 @@ public class FireworksCrateBlock extends TntBlock implements BlockEntityProvider
     @Override
     public void onDestroyedByExplosion(World world, BlockPos pos, Explosion explosion) {
         if (!world.isClient) {
-            TntEntity tntEntity = new FireworksCrateEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, explosion.getCausingEntity());
-            int i = tntEntity.getFuse();
-            tntEntity.setFuse((short)(world.random.nextInt(i / 4) + i / 8));
-            world.spawnEntity(tntEntity);
+            FireworksCrateEntity crateEntity = new FireworksCrateEntity(world, (double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, explosion.getCausingEntity());
+            int i = crateEntity.getFuse();
+            crateEntity.setFuse((short)(world.random.nextInt(i / 4) + i / 8));
+            world.spawnEntity(crateEntity);
         }
     }
 
